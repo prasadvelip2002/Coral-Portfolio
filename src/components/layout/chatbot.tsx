@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { MessageSquare, X, Send, Bot, User, Loader2, Trash2, Mic, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,33 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const clearChat = () => {
+    setMessages(initialMessages);
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const startListening = () => {
+    // @ts-ignore - Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice recognition is not supported in your browser.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput((prev) => (prev ? prev + " " + transcript : transcript));
+    };
+    recognition.start();
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -126,14 +152,25 @@ export function Chatbot() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/20 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearChat}
+                  className="text-white hover:bg-white/20 rounded-full"
+                  title="Clear Chat"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white/20 rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages Area */}
@@ -159,12 +196,21 @@ export function Chatbot() {
                     )}
                   </div>
                   <div className={cn(
-                    "px-4 py-3 rounded-2xl text-sm leading-relaxed",
+                    "px-4 py-3 rounded-2xl text-sm leading-relaxed relative group",
                     msg.role === "user" 
                       ? "bg-blue-600 text-white rounded-tr-none" 
-                      : "bg-muted text-foreground rounded-tl-none border border-border/50"
+                      : "bg-muted text-foreground rounded-tl-none border border-border/50 pr-10"
                   )}>
                     {msg.content}
+                    {msg.role === "bot" && (
+                      <button
+                        onClick={() => copyToClipboard(msg.content, msg.id)}
+                        className="absolute right-2 top-2 p-1.5 rounded-md text-muted-foreground hover:bg-background/50 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Copy text"
+                      >
+                        {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -203,7 +249,6 @@ export function Chatbot() {
               </div>
             )}
 
-            {/* Input Area */}
             <div className="p-4 bg-background border-t border-border/50">
               <form onSubmit={handleSend} className="flex items-center gap-2 relative">
                 <input
@@ -211,8 +256,18 @@ export function Chatbot() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 bg-muted px-4 py-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 pr-12 transition-all"
+                  className="flex-1 bg-muted pl-4 pr-20 py-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={startListening}
+                  className="absolute right-12 w-8 h-8 rounded-full text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-colors"
+                  title="Speak"
+                >
+                  <Mic className="w-4 h-4" />
+                </Button>
                 <Button 
                   type="submit"
                   size="icon"

@@ -32,14 +32,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // We use gemini-1.5-flash for fast text responses
+    // We use gemini-pro for better compatibility across all API keys
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: SYSTEM_INSTRUCTION,
+      model: "gemini-pro",
     });
 
     // Extract the latest user message
-    const latestUserMessage = messages[messages.length - 1].content;
+    let latestUserMessage = messages[messages.length - 1].content;
     
     // Format previous messages for history if there are any
     let history = messages.slice(0, -1).map((msg: any) => ({
@@ -48,9 +47,13 @@ export async function POST(request: Request) {
     }));
 
     // Gemini API requires the first message in the history to be from the user.
-    // If the first message is from the model (like our initial greeting), remove it.
     if (history.length > 0 && history[0].role === "model") {
       history.shift();
+    }
+
+    // Inject system instructions into the very first prompt if there is no history
+    if (history.length === 0) {
+      latestUserMessage = `System Context (Do not acknowledge this context to the user, just act accordingly): ${SYSTEM_INSTRUCTION}\n\nUser Message: ${latestUserMessage}`;
     }
 
     // Start a chat session with the model, providing history
