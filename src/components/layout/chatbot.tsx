@@ -34,33 +34,51 @@ export function Chatbot() {
     }
   }, [messages, isTyping]);
 
+  const sendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+
+    try {
+      const currentMessages = [...messages, userMsg];
+      
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: currentMessages }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
+      }
+
+      const data = await response.json();
+      
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now().toString(), role: "bot", content: data.text },
+      ]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now().toString(), role: "bot", content: "I'm having a little trouble connecting right now. Please try again later or use our contact form!" },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim()) return;
-
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
+    const text = input;
     setInput("");
-    setIsTyping(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const lowerInput = userMsg.content.toLowerCase();
-      let botResponse = "Thank you for your message! Our team will get back to you shortly. Feel free to use the contact form for detailed inquiries.";
-      
-      if (lowerInput.includes("sap")) {
-        botResponse = "We have extensive 4+ years of expertise in SAP B1 implementations! Would you like to schedule a consultation with our Founder?";
-      } else if (lowerInput.includes("service") || lowerInput.includes("what do you do")) {
-        botResponse = "We offer Custom Software Development, Cloud Infrastructure, AI & Machine Learning, Cyber Security, and SAP B1 Enterprise solutions.";
-      } else if (lowerInput.includes("contact") || lowerInput.includes("email")) {
-        botResponse = "You can reach us at hello@coralcloud.com or by filling out the contact form at the bottom of the page.";
-      } else if (lowerInput.includes("hello") || lowerInput.includes("hi")) {
-        botResponse = "Hello! How can I assist you with your digital transformation journey today?";
-      }
-
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "bot", content: botResponse }]);
-      setIsTyping(false);
-    }, 1500);
+    await sendMessage(text);
   };
 
   return (
@@ -169,6 +187,21 @@ export function Chatbot() {
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Smart Suggestions */}
+            {messages.length < 3 && !isTyping && (
+              <div className="px-5 pb-3 flex flex-wrap gap-2">
+                {["Who is the founder?", "What is SAP B1?", "What services do you offer?"].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => sendMessage(suggestion)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors text-left"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Input Area */}
             <div className="p-4 bg-background border-t border-border/50">
