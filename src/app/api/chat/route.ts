@@ -32,9 +32,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // We use gemini-pro for better compatibility across all API keys
+    // We use gemini-1.5-flash as it is the standard model for this API key
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "gemini-1.5-flash",
     });
 
     // Extract the latest user message
