@@ -3,6 +3,7 @@ import { Geist, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
+import { Chatbot } from "@/components/layout/chatbot";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -46,6 +47,7 @@ export default function RootLayout({
           <main className="flex-1 flex flex-col pt-20">
             {children}
           </main>
+          <Chatbot />
         </ThemeProvider>
       </body>
     </html>
