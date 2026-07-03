@@ -53,6 +53,7 @@ export async function POST(request: Request) {
 
     // Try multiple models in order of preference to ensure maximum compatibility across all API keys
     const fallbackModels = [
+      "gemini-2.5-flash",
       "gemini-1.5-flash",
       "gemini-1.5-flash-latest",
       "gemini-1.5-pro",
