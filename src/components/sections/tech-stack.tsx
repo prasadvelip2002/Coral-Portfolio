@@ -23,6 +23,10 @@ const technologies = [
     category: "AI & ML",
     skills: ["OpenAI", "Gemini", "LangChain", "FastAPI", "Hugging Face"],
   },
+  {
+    category: "Enterprise",
+    skills: ["SAP B1", "ERP Solutions", "CRM Systems", "Digital Marketing"],
+  },
 ];
 
 export function TechStackSection() {
@@ -57,7 +61,7 @@ export function TechStackSection() {
           </motion.h2>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {technologies.map((tech, index) => (
             <motion.div
               key={tech.category}
