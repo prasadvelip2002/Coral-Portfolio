@@ -32,11 +32,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // We use gemini-1.5-flash as it is the standard model for this API key
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
-
     // Extract the latest user message
     let latestUserMessage = messages[messages.length - 1].content;
     
@@ -56,17 +51,40 @@ export async function POST(request: Request) {
       latestUserMessage = `System Context (Do not acknowledge this context to the user, just act accordingly): ${SYSTEM_INSTRUCTION}\n\nUser Message: ${latestUserMessage}`;
     }
 
-    // Start a chat session with the model, providing history
-    const chat = model.startChat({
-      history: history,
-    });
+    // Try multiple models in order of preference to ensure maximum compatibility across all API keys
+    const fallbackModels = [
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro",
+      "gemini-1.5-pro-latest",
+      "gemini-pro",
+      "gemini-1.0-pro"
+    ];
 
-    // Send the latest message and get the response
-    const result = await chat.sendMessage(latestUserMessage);
-    const response = await result.response;
-    const text = response.text();
+    let responseText = null;
+    let lastError = null;
 
-    return NextResponse.json({ text });
+    for (const modelName of fallbackModels) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const chat = model.startChat({ history: history });
+        const result = await chat.sendMessage(latestUserMessage);
+        const response = await result.response;
+        responseText = response.text();
+        console.log(`Successfully generated response using model: ${modelName}`);
+        break; // Success! Break out of the loop
+      } catch (error: any) {
+        console.warn(`Model ${modelName} failed:`, error.message);
+        lastError = error;
+      }
+    }
+
+    if (responseText !== null) {
+      return NextResponse.json({ text: responseText });
+    } else {
+      console.error("All Gemini models failed. Last error:", lastError);
+      throw new Error("All fallback models failed to generate content.");
+    }
   } catch (error) {
     console.error("Gemini API Error:", error);
     return NextResponse.json(
