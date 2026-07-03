@@ -8,7 +8,7 @@ const leaders = [
     name: "Alex Sterling",
     role: "Founder & CEO",
     image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    bio: "Visionary leader with 15+ years in enterprise tech and cloud architecture.",
+    bio: "4+ years of comprehensive expertise in SAP B1 implementations alongside deep knowledge of digital marketing strategies.",
   },
   {
     name: "Samantha Lee",
